@@ -123,32 +123,39 @@ public class DemoBatchConsumerConfig {
 
 > The bean name `demoBatchConsumer` **must** exactly match `spring.cloud.function.definition` — this drives the binding name `demoBatchConsumer-in-0`.
 
-### 6. Create load generator
-File: `src/main/java/com/dynatrace/demo/batchsample2/DemoLoadGenerator.java`
+### 6. Create load generator API
 
-Uses `StreamBridge` (Spring Cloud Stream's imperative send API) with `@Scheduled`:
+The load generator sends one message to each topic on every tick.  
+Message format: `msg-{counter} at {ISO-8601 timestamp}`
 
-```java
-@Component
-public class DemoLoadGenerator {
-    private static final Logger log = LoggerFactory.getLogger(DemoLoadGenerator.class);
-    private static final String DESTINATION = "demo-batch-events";
-    private final StreamBridge streamBridge;
-    private final AtomicLong counter = new AtomicLong(0);
+#### Start
 
-    public DemoLoadGenerator(StreamBridge streamBridge) {
-        this.streamBridge = streamBridge;
-    }
-
-    @Scheduled(fixedDelay = 2000)
-    public void sendMessage() {
-        long n = counter.incrementAndGet();
-        String payload = "demo-event-" + n + " at " + Instant.now();
-        boolean sent = streamBridge.send(DESTINATION, payload);
-        log.info("Sent #{}: {} (accepted={})", n, payload, sent);
-    }
-}
+```bash
+curl -X POST "http://localhost:8081/load/start?intervalMs=2000"
 ```
+
+| Parameter    | Default | Description                        |
+|--------------|---------|------------------------------------|
+| `intervalMs` | `100`   | Interval between sends (milliseconds) |
+
+#### Stop
+
+```bash
+curl -X POST "http://localhost:8081/load/stop"
+```
+
+#### Status
+
+```bash
+curl http://localhost:8081/load/status
+```
+
+Example response:
+
+```json
+{"running": true, "intervalMs": 100}
+```
+
 
 ### 7. Update `CLAUDE.md`
 Update the existing `CLAUDE.md` to reflect the actual implementation:

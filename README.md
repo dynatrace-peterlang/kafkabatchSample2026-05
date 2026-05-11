@@ -40,13 +40,34 @@ Or with explicit Java 21 (if `JAVA_HOME` is not set to 21):
 JAVA_HOME=$JAVA_HOME_21 ./mvnw spring-boot:run
 ```
 
+## Load generator API
+
+The generator starts **stopped**. Use the REST API to control it:
+
+```bash
+# Start (default 100 ms interval)
+curl -X POST "http://localhost:8082/load/start?intervalMs=2000"
+
+# Stop
+curl -X POST http://localhost:8082/load/stop
+
+# Status
+curl http://localhost:8082/load/status
+# {"running":true,"intervalMs":2000}
+```
+
+| Parameter    | Default | Description                           |
+|--------------|---------|---------------------------------------|
+| `intervalMs` | `100`   | Interval between sends (milliseconds) |
+
 ## Observe
 
-**Application logs** show the producer and consumer interleaving:
+**Application logs** show the producer and consumer interleaving after `/load/start`:
 
 ```
-INFO  DemoLoadGenerator      : Sent #1: demo-event-1 at 2026-05-11T... (accepted=true)
-INFO  DemoLoadGenerator      : Sent #2: demo-event-2 at 2026-05-11T... (accepted=true)
+INFO  DemoLoadGenerator      : Load generator started (intervalMs=2000)
+INFO  DemoLoadGenerator      : Sent #1: msg-1 at 2026-05-11T... (accepted=true)
+INFO  DemoLoadGenerator      : Sent #2: msg-2 at 2026-05-11T... (accepted=true)
 INFO  DemoBatchConsumerConfig: Batch received: 2 messages
 ```
 
