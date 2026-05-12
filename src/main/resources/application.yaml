@@ -4,7 +4,7 @@ spring:
 
   cloud:
     function:
-      definition: demoBatchConsumer
+      definition: demoBatchConsumer;demoSingleConsumer
     stream:
       bindings:
         demoBatchConsumer-in-0:
@@ -12,6 +12,14 @@ spring:
           group: demo-batch-events.consumer.batchsample2
           consumer:
             batch-mode: true
+            use-native-decoding: false
+            maxAttempts: 3
+            concurrency: 1
+        demoSingleConsumer-in-0:
+          destination: demo-batch-events
+          group: demo-batch-events.consumer.batchsample2-single
+          consumer:
+            batch-mode: false
             use-native-decoding: false
             maxAttempts: 3
             concurrency: 1

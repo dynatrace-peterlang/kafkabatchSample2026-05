@@ -28,7 +28,10 @@ public class DemoBatchConsumerConfig {
     @Bean
     public KafkaListenerContainerCustomizer idleBetweenPollsCustomizer(
             @Value("${demo.consumer.idle-between-polls-ms:5000}") long idleBetweenPollsMs) {
-        return (container, dest, group) ->
+        return (container, dest, group) -> {
+            if ("demo-batch-events.consumer.batchsample2".equals(group)) {
                 container.getContainerProperties().setIdleBetweenPolls(idleBetweenPollsMs);
+            }
+        };
     }
 }
