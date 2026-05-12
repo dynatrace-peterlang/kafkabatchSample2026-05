@@ -22,11 +22,14 @@ spring:
         bindings:
           demoBatchConsumer-in-0:
             consumer:
-              idle-between-polls: 2000
               configuration:
                 max.poll.records: 10
-                max.poll.interval.ms: 10000
+                max.poll.interval.ms: 30000
                 fetch.max.bytes: 1048576
+
+demo:
+  consumer:
+    idle-between-polls-ms: 5000
 
 server:
   port: 8082
