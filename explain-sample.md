@@ -1,0 +1,21 @@
+# Sample DemoBatchConsumerConfig
+
+The demoBatchConsumer uses the Spring Cloud Stream functional programming model (not @KafkaListener, not Spring Integration annotations — just a plain Java java.util.function.Consumer).
+
+Here's how the layers stack up:
+
+1. java.util.function.Consumer<T> (Java standard)                                                                                                                                                                                                                                                                                                                                                                              
+   The bean is just a standard Java functional interface. No Spring annotation on the method itself.
+
+2. Spring Cloud Function (spring.cloud.function.definition: demoBatchConsumer)                                                                                                                                                                                                                                                                                                                                                 
+   Spring Cloud Function discovers the bean by name and treats it as a message processing function. The YAML entry spring.cloud.function.definition is what wires it up — the name must exactly match the @Bean name.
+
+3. Spring Cloud Stream (the binder layer)                                                                                                                                                                                                                                                                                                                                                                                      
+   Spring Cloud Stream sees the declared function definition, creates a binding named demoBatchConsumer-in-0, and connects it to the demo-batch-events Kafka topic. It handles deserialization, error handling (maxAttempts), and concurrency before your Consumer ever sees a message.
+
+4. Spring Cloud Stream Kafka Binder (Kafka-specific)                                                                                                                                                                                                                                                                                                                                                                           
+   Underneath, the binder uses a Spring Kafka ConcurrentMessageListenerContainer to actually poll Kafka. The native Kafka config (max.poll.records, max.poll.interval.ms, etc.) lives here. This is also why idleBetweenPolls had to be set via a KafkaListenerContainerCustomizer — it's a container-level concern, below the Cloud Stream abstraction.
+
+Why Message<List<String>> instead of just List<String>?                                                                                                                                                                                                                                                                                                                                                                        
+The outer Message<> wrapper gives access to headers (partition, offset, timestamps). The inner List<String> signals batch mode — Spring Cloud Stream delivers all records from a single poll as one list rather than invoking the consumer once per record. This is enabled by batch-mode: true in the binding config.                                                                                                         
+                                                                                                                                                                                                                                                                                                                           

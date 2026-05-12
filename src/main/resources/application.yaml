@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: batchsample2
+
+  cloud:
+    function:
+      definition: demoBatchConsumer;demoSingleConsumer
+    stream:
+      bindings:
+        demoBatchConsumer-in-0:
+          destination: demo-batch-events
+          group: demo-batch-events.consumer.batchsample2
+          consumer:
+            batch-mode: true
+            use-native-decoding: false
+            maxAttempts: 3
+            concurrency: 1
+        demoSingleConsumer-in-0:
+          destination: demo-batch-events
+          group: demo-batch-events.consumer.batchsample2-single
+          consumer:
+            batch-mode: false
+            use-native-decoding: false
+            maxAttempts: 3
+            concurrency: 1
+      kafka:
+        binder:
+          brokers: localhost:9092
+          auto-create-topics: true
+        bindings:
+          demoBatchConsumer-in-0:
+            consumer:
+              configuration:
+                max.poll.records: 10
+                max.poll.interval.ms: 30000
+                fetch.max.bytes: 1048576
+
+demo:
+  consumer:
+    idle-between-polls-ms: 5000
+
+server:
+  port: 8082
