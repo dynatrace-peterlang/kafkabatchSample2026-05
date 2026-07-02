@@ -86,3 +86,60 @@ INFO  DemoBatchConsumerConfig: Batch received: 2 messages
 ```
 
 The `contextLoads()` test runs against the in-memory test binder — no Kafka needed.
+
+## OpenTelemetry
+
+Start Jaeger tracing UI in podman 
+
+```shell
+podman run --rm --name jaeger `
+  -p 16686:16686 `
+  -p 4317:4317 `
+  -p 4318:4318 `
+  -p 5778:5778 `
+  -p 9411:9411 `
+  cr.jaegertracing.io/jaegertracing/jaeger:2.19.0
+```
+```shell
+java -javaagent:.\opentelemetry-javaagent.jar "-Dotel.traces.exporter=otlp" "-Dotel.metrics.exporter=none" "-Dotel.logs.exporter=none" "-Dotel.exporter.otlp.endpoint=http://localhost:4318" -jar .\target\batchsample2-0.0.1-SNAPSHOT.jar
+```
+
+## DT OpenTelemetry ingest
+
+You could use the [DT OpenTelemetry collector](https://docs.dynatrace.com/docs/ingest-from/opentelemetry/collector/configuration) 
+also see on GitHub [Dynatrace OTEL collector](https://github.com/Dynatrace/dynatrace-otel-collector).
+
+`otel-collector-conf.yaml`
+```yaml
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlp_http:
+    endpoint: https://aed51865.dev.dynatracelabs.com:443/api/v2/otlp
+    headers:
+      Authorization: Api-Token ${env:API_TOKEN}
+  debug:
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp_http]
+```
+
+To run the collector 
+```shell
+ dynatrace-otel-collector.exe --config=.\otel-collector-config.yaml
+```
+
+To run the sample application
+
+```shell
+java -javaagent:.\opentelemetry-javaagent.jar "-Dotel.traces.exporter=otlp" "-Dotel.metrics.exporter=none" "-Dotel.logs.exporter=none" "-Dotel.exporter.otlp.endpoint=http://localhost:4318" -jar .\target\batchsample2-0.0.1-SNAPSHOT.jar
+```
